@@ -9,7 +9,7 @@ import (
 func main() {
 	version := os.Getenv("APP_VERSION")
 	if version == "" {
-		version = "v1.0.0"
+		version = "v1.0.1"
 	}
 
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -28,3 +28,4 @@ func main() {
 	fmt.Printf("Starting app version %s on :8080\n", version)
 	http.ListenAndServe(":8080", nil)
 }
+// Trigger CI pipeline: Tue Jul 21 05:07:31 PM BST 2026
