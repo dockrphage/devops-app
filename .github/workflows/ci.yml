@@ -1,0 +1,49 @@
+name: Build and Push
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    
+    - name: Build and push
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          dockrphage/devops-app:latest
+          dockrphage/devops-app:${{ github.sha }}
+    
+    - name: Update GitOps Repo
+      env:
+        MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+      run: |
+        # Clone using the token
+        git clone https://x-access-token:${MY_GITHUB_TOKEN}@github.com/dockrphage/devops-gitops.git
+        cd devops-gitops
+        
+        # Update the image tag
+        sed -i "s|image: dockrphage/devops-app:.*|image: dockrphage/devops-app:${{ github.sha }}|g" app/base/deployment.yaml
+        
+        # Update the version
+        sed -i "s|value: \"v.*\"|value: \"v${{ github.run_number }}\"|g" app/base/deployment.yaml
+        
+        # Commit and push
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add .
+        git commit -m "Update image to ${{ github.sha }}" || echo "No changes to commit"
+        git push origin main
+        
+        echo "✅ GitOps repo updated!"
