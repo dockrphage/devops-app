@@ -29,21 +29,19 @@ jobs:
       env:
         MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
       run: |
-        # Clone using the token
+        # Clone GitOps repo with token
         git clone https://x-access-token:${MY_GITHUB_TOKEN}@github.com/dockrphage/devops-gitops.git
         cd devops-gitops
         
-        # Update the image tag
+        # Update image tag
         sed -i "s|image: dockrphage/devops-app:.*|image: dockrphage/devops-app:${{ github.sha }}|g" app/base/deployment.yaml
         
-        # Update the version
+        # Update version
         sed -i "s|value: \"v.*\"|value: \"v${{ github.run_number }}\"|g" app/base/deployment.yaml
         
         # Commit and push
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add .
-        git commit -m "Update image to ${{ github.sha }}" || echo "No changes to commit"
+        git commit -m "Update image to ${{ github.sha }}" || echo "No changes"
         git push origin main
-        
-        echo "✅ GitOps repo updated!"
